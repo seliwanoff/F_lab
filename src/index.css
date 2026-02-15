@@ -1,0 +1,5 @@
+@import "tailwindcss";
+.btn {
+  @apply px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition;
+}
+@custom-variant dark (&:where(.dark, .dark *));

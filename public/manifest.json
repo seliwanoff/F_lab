@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "FormatLab",
+  "version": "1.0",
+  "description": "JSON Formatter + Network Monitor Extension",
+  "permissions": ["storage", "webRequest", "webRequestBlocking"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": "icons/icon.png"
+  }
+}
