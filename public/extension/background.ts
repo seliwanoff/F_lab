@@ -8,7 +8,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         try {
           const buffer = details.requestBody.raw[0].bytes;
           if (buffer) {
-            const bytes = new Uint8Array(buffer); // ✅ convert ArrayBuffer → Uint8Array
+            const bytes = new Uint8Array(buffer);
             body = new TextDecoder("utf-8").decode(bytes);
           }
         } catch {
@@ -30,7 +30,7 @@ chrome.webRequest.onBeforeRequest.addListener(
       chrome.storage.local.set({ requests: [newRequest, ...prevRequests] });
     });
 
-    return undefined; // required for webRequestBlocking type
+    return undefined;
   },
   { urls: ["<all_urls>"] },
   ["requestBody"],
