@@ -28,5 +28,5 @@ Built with **React**, **TypeScript**, and **TailwindCSS**, it makes debugging an
 
 1. Clone the repo:  
 ```bash
-git clone https://github.com/your-username/formatlab.git
+git clone (https://github.com/seliwanoff/F_lab.git
 cd formatlab
