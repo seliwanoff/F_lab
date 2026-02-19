@@ -15,34 +15,32 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
 
-  // Listen for dark mode
+  // Dark mode toggle
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
   }, [darkMode]);
 
+  // Load requests + listen for updates
   useEffect(() => {
-    const fetchRequests = () => {
-      if (typeof chrome !== "undefined" && chrome.storage?.local) {
-        chrome.storage.local.get({ requests: [] }, (result) => {
-          const requestsFromStorage = result.requests as any[];
+    if (chrome?.storage?.local) {
+      chrome.storage.local.get({ requests: [] }, (result) => {
+        //@ts-ignore
+        setRequests(result.requests || []);
+      });
+    }
 
-          console.log("Fetched requests from storage:", requestsFromStorage);
-          setRequests(requestsFromStorage);
-        });
+    const listener = (changes: any, area: string) => {
+      if (area === "local" && changes.requests) {
+        setRequests(changes.requests.newValue || []);
       }
     };
 
-    fetchRequests();
+    chrome.storage.onChanged.addListener(listener);
 
-    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
-      chrome.storage.onChanged.addListener((changes) => {
-        if (changes.requests) {
-          const newRequests = changes.requests.newValue as any[];
-          setRequests(newRequests);
-        }
-      });
-    }
+    return () => {
+      chrome.storage.onChanged.removeListener(listener);
+    };
   }, []);
 
   const formatJSON = () => {
@@ -51,8 +49,7 @@ export default function App() {
       setParsedJSON(parsed);
       setInput(JSON.stringify(parsed, null, 2));
       setError("");
-    } catch (err) {
-      //@ts-ignore
+    } catch (err: any) {
       setError(err.message);
       setParsedJSON(null);
     }
@@ -64,8 +61,7 @@ export default function App() {
       setParsedJSON(parsed);
       setInput(JSON.stringify(parsed));
       setError("");
-    } catch (err) {
-      //@ts-ignore
+    } catch (err: any) {
       setError(err.message);
       setParsedJSON(null);
     }
@@ -154,31 +150,55 @@ export default function App() {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             Network Requests
           </h2>
-          {requests.map((req, idx) => (
-            <div
-              key={idx}
-              className="mb-3 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700"
-            >
-              <p className="text-sm font-bold text-gray-900 dark:text-white">
-                {req.method} - {req.url}
-              </p>
-              {req.body && (
-                <SyntaxHighlighter
-                  language="json"
-                  style={darkMode ? oneDark : oneLight}
-                  wrapLongLines
-                  customStyle={{
-                    padding: "8px",
-                    fontFamily: "monospace",
-                    marginTop: "4px",
-                  }}
-                >
-                  {req.body}
-                </SyntaxHighlighter>
-              )}
-              <JsonView data={req.response || {}} />
-            </div>
-          ))}
+
+          {requests.map((req, idx) => {
+            let parsedResponse = null;
+
+            try {
+              parsedResponse =
+                typeof req.response === "string"
+                  ? JSON.parse(req.response)
+                  : req.response;
+            } catch {
+              parsedResponse = null;
+            }
+
+            return (
+              <div
+                key={idx}
+                className="mb-3 p-3 border rounded-lg bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-700"
+              >
+                <p className="text-sm font-bold text-gray-900 dark:text-white break-words">
+                  {req.method} - {req.url}
+                </p>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Status: {req.status}
+                </p>
+
+                {parsedResponse ? (
+                  <div className="mt-2">
+                    <JsonView data={parsedResponse} />
+                  </div>
+                ) : (
+                  req.response && (
+                    <SyntaxHighlighter
+                      language="json"
+                      style={darkMode ? oneDark : oneLight}
+                      wrapLongLines
+                      customStyle={{
+                        padding: "8px",
+                        fontFamily: "monospace",
+                        marginTop: "8px",
+                      }}
+                    >
+                      {req.response}
+                    </SyntaxHighlighter>
+                  )
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
